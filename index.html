@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>Grow Strong Tracker 🌱</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f0f2ff;
+      min-height: 100vh;
+      padding-bottom: 40px;
+    }
+    .container { max-width: 480px; margin: 0 auto; padding: 16px; }
+
+    .header {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      border-radius: 18px;
+      padding: 24px 20px;
+      color: white;
+      text-align: center;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 20px #667eea44;
+    }
+    .header .icon { font-size: 42px; margin-bottom: 6px; }
+    .header h1 { font-size: 22px; font-weight: 800; }
+    .header p { font-size: 13px; opacity: 0.85; margin-top: 4px; }
+
+    /* API key setup screen */
+    .setup-card {
+      background: white;
+      border-radius: 14px;
+      padding: 24px;
+      box-shadow: 0 2px 12px #0001;
+    }
+    .setup-card h2 { font-size: 17px; font-weight: 700; margin-bottom: 8px; color: #333; }
+    .setup-card p { font-size: 13px; color: #666; margin-bottom: 16px; line-height: 1.6; }
+    .setup-card ol { font-size: 13px; color: #555; padding-left: 18px; margin-bottom: 16px; line-height: 2; }
+    .setup-card a { color: #667eea; }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 11px 4px;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 700;
+      transition: all 0.2s;
+    }
+    .tab-btn.active { background: #667eea; color: white; box-shadow: 0 3px 10px #667eea44; }
+    .tab-btn.inactive { background: white; color: #666; box-shadow: 0 1px 4px #0001; }
+
+    .card {
+      background: white;
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 2px 12px #0001;
+    }
+    .card h2 { font-size: 16px; font-weight: 700; color: #333; margin-bottom: 6px; }
+    .card .sub { font-size: 12px; color: #888; margin-bottom: 14px; line-height: 1.5; }
+
+    label { font-size: 13px; color: #666; display: block; margin-bottom: 5px; }
+    input, textarea {
+      width: 100%;
+      padding: 11px 13px;
+      border-radius: 10px;
+      border: 1.5px solid #e0e0e0;
+      font-size: 15px;
+      outline: none;
+      transition: border 0.2s;
+      font-family: inherit;
+    }
+    input:focus, textarea:focus { border-color: #667eea; }
+    textarea { min-height: 100px; resize: vertical; font-size: 14px; }
+    .field { margin-bottom: 14px; }
+
+    .bmi-box {
+      background: #f0f4ff;
+      border-radius: 12px;
+      padding: 14px;
+      margin-top: 10px;
+      text-align: center;
+    }
+    .bmi-box .bmi-label { font-size: 12px; color: #888; }
+    .bmi-box .bmi-val { font-size: 32px; font-weight: 800; color: #667eea; }
+    .bmi-box .bmi-note { font-size: 12px; color: #777; margin-top: 6px; line-height: 1.5; }
+
+    .btn {
+      width: 100%;
+      padding: 15px;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: 700;
+      color: white;
+      margin-top: 12px;
+      transition: opacity 0.2s;
+    }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-nutrition { background: linear-gradient(135deg, #667eea, #764ba2); }
+    .btn-activity { background: linear-gradient(135deg, #f093fb, #f5576c); }
+    .btn-save { background: linear-gradient(135deg, #43e97b, #38f9d7); }
+
+    .result-box {
+      margin-top: 16px;
+      border-radius: 12px;
+      padding: 16px;
+      font-size: 14px;
+      line-height: 1.8;
+      white-space: pre-wrap;
+      color: #333;
+    }
+    .result-nutrition { background: #f6fff6; border: 1.5px solid #c8e6c9; }
+    .result-activity { background: #fff6f8; border: 1.5px solid #ffcdd2; }
+
+    .tip-box {
+      background: #fff8e1;
+      border-radius: 10px;
+      padding: 12px;
+      font-size: 12px;
+      color: #795548;
+      margin-top: 14px;
+      line-height: 1.6;
+    }
+
+    .warn { color: #e67e22; font-size: 12px; margin-top: 6px; }
+
+    .loading-dots::after {
+      content: '';
+      animation: dots 1.2s steps(4, end) infinite;
+    }
+    @keyframes dots {
+      0%, 20% { content: ''; }
+      40% { content: '.'; }
+      60% { content: '..'; }
+      80%, 100% { content: '...'; }
+    }
+
+    .api-row { display: flex; gap: 8px; align-items: center; }
+    .api-row input { flex: 1; font-size: 13px; }
+    .api-row button {
+      padding: 11px 14px;
+      border-radius: 10px;
+      border: none;
+      background: #667eea;
+      color: white;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+    .api-saved { color: #27ae60; font-size: 12px; margin-top: 6px; font-weight: 600; }
+    .api-section { margin-top: 20px; background: #f8f9ff; border-radius: 12px; padding: 14px; }
+    .api-section label { color: #555; font-weight: 600; }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div class="icon">🌱</div>
+    <h1>Grow Strong Tracker</h1>
+    <p>AI-powered nutrition & activity guide</p>
+  </div>
+
+  <!-- API Key setup (shown if no key saved) -->
+  <div id="setup-screen" style="display:none">
+    <div class="setup-card">
+      <h2>🔑 Enter your Anthropic API Key</h2>
+      <p>This app uses AI to give personalized nutrition and activity advice. You need a free Anthropic API key to use it.</p>
+      <ol>
+        <li>Go to <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a></li>
+        <li>Sign up for a free account</li>
+        <li>Click <strong>API Keys</strong> → <strong>Create Key</strong></li>
+        <li>Copy and paste it below</li>
+      </ol>
+      <div class="api-row">
+        <input type="password" id="api-key-input" placeholder="sk-ant-..." />
+        <button onclick="saveApiKey()">Save</button>
+      </div>
+      <div id="api-saved-msg" class="api-saved" style="display:none">✅ Key saved! Reloading...</div>
+    </div>
+  </div>
+
+  <!-- Main app -->
+  <div id="main-app" style="display:none">
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab-btn active" id="tab0" onclick="switchTab(0)">👤 Profile</button>
+      <button class="tab-btn inactive" id="tab1" onclick="switchTab(1)">🍽️ Nutrition</button>
+      <button class="tab-btn inactive" id="tab2" onclick="switchTab(2)">🏃 Activity</button>
+    </div>
+
+    <!-- PROFILE TAB -->
+    <div id="panel0" class="card">
+      <h2>👤 Your Son's Profile</h2>
+      <p class="sub">Enter his details — used by the AI for personalized advice.</p>
+      <div class="field"><label>Age (years)</label><input type="number" id="age" value="9" min="1" max="18" /></div>
+      <div class="field"><label>Height (cm)</label><input type="number" id="height" value="122" min="80" max="220" /></div>
+      <div class="field"><label>Weight (kg)</label><input type="number" id="weight" value="22" min="10" max="150" /></div>
+      <button class="btn btn-save" onclick="saveProfile()">💾 Save Profile</button>
+      <div id="bmi-display"></div>
+
+      <!-- API key change -->
+      <div class="api-section">
+        <label>🔑 API Key</label>
+        <div class="api-row" style="margin-top:6px">
+          <input type="password" id="api-key-change" placeholder="Change API key..." />
+          <button onclick="saveApiKey()">Update</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- NUTRITION TAB -->
+    <div id="panel1" class="card" style="display:none">
+      <h2>🍽️ What did he eat today?</h2>
+      <p class="sub">List everything from breakfast, lunch and snacks. Use Swedish grocery names or any language.</p>
+      <textarea id="foods" placeholder="e.g. Frukostflingor with mjölk, smörgås with cheese, pasta with tomato sauce, an apple..."></textarea>
+      <div id="nutrition-warn" class="warn" style="display:none">⚠️ Please save your son's profile first (Profile tab)</div>
+      <button class="btn btn-nutrition" id="dinner-btn" onclick="analyzeDinner()">✨ What should I add at dinner?</button>
+      <div id="dinner-result" class="result-box result-nutrition" style="display:none"></div>
+    </div>
+
+    <!-- ACTIVITY TAB -->
+    <div id="panel2" class="card" style="display:none">
+      <h2>🏃 Today's Indoor Activity Plan</h2>
+      <p class="sub">30 mins of fun indoor activities you can do together — fresh AI plan every time!</p>
+      <div id="activity-warn" class="warn" style="display:none">⚠️ Please save your son's profile first (Profile tab)</div>
+      <button class="btn btn-activity" id="activity-btn" onclick="getActivities()">🎲 Generate Today's Activity Plan</button>
+      <div id="activity-result" class="result-box result-activity" style="display:none"></div>
+      <div class="tip-box">💡 <strong>Tip:</strong> Tap the button daily for a brand new plan — the AI never repeats the same routine!</div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const MODEL = "claude-sonnet-4-20250514";
+  let profile = { age: 9, height: 122, weight: 22 };
+
+  function getApiKey() {
+    return localStorage.getItem("anthropic_api_key") || "";
+  }
+
+  function saveApiKey() {
+    const k1 = document.getElementById("api-key-input")?.value.trim();
+    const k2 = document.getElementById("api-key-change")?.value.trim();
+    const key = k1 || k2;
+    if (!key.startsWith("sk-")) { alert("Please enter a valid Anthropic API key (starts with sk-ant-)"); return; }
+    localStorage.setItem("anthropic_api_key", key);
+    const msg = document.getElementById("api-saved-msg");
+    if (msg) { msg.style.display = "block"; }
+    setTimeout(() => location.reload(), 1000);
+  }
+
+  function init() {
+    const key = getApiKey();
+    if (!key) {
+      document.getElementById("setup-screen").style.display = "block";
+    } else {
+      document.getElementById("main-app").style.display = "block";
+      loadProfile();
+      updateBMI();
+    }
+  }
+
+  function loadProfile() {
+    const saved = localStorage.getItem("grow_profile");
+    if (saved) {
+      profile = JSON.parse(saved);
+      document.getElementById("age").value = profile.age;
+      document.getElementById("height").value = profile.height;
+      document.getElementById("weight").value = profile.weight;
+      updateBMI();
+    }
+  }
+
+  function saveProfile() {
+    profile.age = parseFloat(document.getElementById("age").value) || 9;
+    profile.height = parseFloat(document.getElementById("height").value) || 122;
+    profile.weight = parseFloat(document.getElementById("weight").value) || 22;
+    localStorage.setItem("grow_profile", JSON.stringify(profile));
+    updateBMI();
+    alert("✅ Profile saved!");
+  }
+
+  function updateBMI() {
+    const h = profile.height, w = profile.weight, a = profile.age;
+    if (!h || !w) return;
+    const bmi = (w / Math.pow(h / 100, 2)).toFixed(1);
+    document.getElementById("bmi-display").innerHTML = `
+      <div class="bmi-box">
+        <div class="bmi-label">BMI</div>
+        <div class="bmi-val">${bmi}</div>
+        <div class="bmi-note">At age ${a}, the average Indian boy height is ~131.8 cm (50th percentile IAP chart). At ${h} cm your son is on the lower percentile — with good nutrition, sleep & activity there is great room to grow! 💪</div>
+      </div>`;
+  }
+
+  function switchTab(i) {
+    [0,1,2].forEach(j => {
+      document.getElementById(`panel${j}`).style.display = j === i ? "block" : "none";
+      document.getElementById(`tab${j}`).className = `tab-btn ${j === i ? "active" : "inactive"}`;
+    });
+  }
+
+  async function callClaude(systemPrompt, userPrompt) {
+    const key = getApiKey();
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": key,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true"
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        max_tokens: 1000,
+        system: systemPrompt,
+        messages: [{ role: "user", content: userPrompt }]
+      })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+    return data.content?.[0]?.text || "";
+  }
+
+  async function analyzeDinner() {
+    const foods = document.getElementById("foods").value.trim();
+    if (!foods) { alert("Please enter what your son ate today."); return; }
+    if (!localStorage.getItem("grow_profile")) {
+      document.getElementById("nutrition-warn").style.display = "block"; return;
+    }
+    const btn = document.getElementById("dinner-btn");
+    const result = document.getElementById("dinner-result");
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading-dots">🤔 AI is analysing</span>';
+    result.style.display = "none";
+
+    const sys = `You are a children's nutrition expert helping an Indian parent living in Sweden.
+The child is ${profile.age} years old, ${profile.height}cm tall, ${profile.weight}kg.
+The child is on the shorter side for their age (around 3rd-10th percentile for Indian children) and the parent wants to help them grow better this year — they have been growing only 4cm/year and the parent wants to improve this.
+Your job: analyze what the child ate today, identify nutritional gaps important for growth (protein, calcium, vitamin D, zinc, iron, vitamins), then suggest specific dinner additions.
+IMPORTANT: Only suggest foods easily available in Swedish grocery stores (ICA, Coop, Willys, Lidl, Hemköp). Use Swedish food names where helpful.
+Format your response with clear emoji sections. Keep it friendly, warm and practical. Be specific about portions for a ${profile.age}-year-old.`;
+
+    const usr = `My son ate this today: "${foods}"
+What nutrients is he missing and what should I add at dinner tonight to help his growth? Suggest 3-5 specific practical dinner additions available in Swedish stores.`;
+
+    try {
+      const text = await callClaude(sys, usr);
+      result.textContent = text;
+      result.style.display = "block";
+    } catch (e) {
+      result.textContent = "❌ Error: " + e.message;
+      result.style.display = "block";
+    }
+    btn.disabled = false;
+    btn.innerHTML = "✨ What should I add at dinner?";
+  }
+
+  async function getActivities() {
+    if (!localStorage.getItem("grow_profile")) {
+      document.getElementById("activity-warn").style.display = "block"; return;
+    }
+    const btn = document.getElementById("activity-btn");
+    const result = document.getElementById("activity-result");
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading-dots">🎮 Creating your plan</span>';
+    result.style.display = "none";
+
+    const sys = `You are a fun children's fitness coach helping an Indian parent in Sweden during winter.
+The child is ${profile.age} years old, ${profile.height}cm tall, ${profile.weight}kg — on the shorter side and the parent wants to help them grow significantly this year.
+Activities MUST be:
+- Fully indoors (it is Swedish winter, very cold outside)
+- Fun and playful — something a parent and child can do TOGETHER at home
+- Simple, requiring no equipment or only household items (balloons, pillows, chairs, stairs, etc.)
+- Safe for indoors
+- Supportive of bone growth, posture, coordination and overall health
+Generate a fresh 30-minute daily activity plan. Make it feel like a game not exercise. Use emojis generously to make it fun and engaging. Include activity name, duration, exactly how to play it, and a short note on why it helps growth.`;
+
+    const usr = `Give me a fun 30-minute indoor activity plan I can do with my ${profile.age}-year-old son today at home in Sweden. It is winter so we stay inside. Make it feel like play, not exercise — something we will both enjoy together!`;
+
+    try {
+      const text = await callClaude(sys, usr);
+      result.textContent = text;
+      result.style.display = "block";
+    } catch (e) {
+      result.textContent = "❌ Error: " + e.message;
+      result.style.display = "block";
+    }
+    btn.disabled = false;
+    btn.innerHTML = "🎲 Generate Today's Activity Plan";
+  }
+
+  init();
+</script>
+</body>
+</html>
